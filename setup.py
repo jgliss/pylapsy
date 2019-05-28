@@ -12,19 +12,19 @@ with open('README.md') as file:
 with open("VERSION") as f:
     version = f.readline()
     f.close()
- 
+
 #with open(join("geonum","local_topo_data", "LOCAL_TOPO_PATHS.txt"), 'w'): pass
-       
+
 setup(
-    name        =   'timelapsy',
+    name        =   'pylapsy',
     version     =   version,
     author      =   'Jonas Gliss',
     author_email=   'jonasgliss@gmail.com',
-    license     =   'MIT',
-    url         =   'https://github.com/jgliss/timelapse_tools',
-    package_dir =   {'timelapsy'     :   'timelapsy'},
+    license     =   'GPL-3.0',
+    url         =   'https://github.com/jgliss/pylapsy',
+    package_dir =   {'pylapsy'     :   'pylapsy'},
     packages    =   find_packages(exclude=['contrib', 'docs', 'tests*']),
-    include_package_data    =   True,  
+    include_package_data    =   True,
     package_data=   {},
     install_requires  =   [],
     extras_require={},
@@ -43,12 +43,10 @@ setup(
         # that you indicate whether you support Python 2, Python 3 or both.,
         'Programming Language :: Python :: 3'
     ],
-    
+
     #dependency_links    =   ["https://github.com/tkrajina/srtm.py/archive/v.0.3.1.zip#egg=srtm"],
     #package_data={'geonum':['suppl/*.dat']},
     description = 'Python toolbox for timelapse image processing',
     long_description = readme,
-    entry_points = {'console_scripts' : ['lapsy=timelapsy.scripts.cli']},
-    
-    #requires=['python (>= 2.7)', 'numpy', 'astropy'],
+    entry_points = {'console_scripts' : ['ply=timelapsy.scripts.cli']},
 )
