@@ -48,5 +48,5 @@ setup(
     #package_data={'geonum':['suppl/*.dat']},
     description = 'Python toolbox for timelapse image processing',
     long_description = readme,
-    entry_points = {'console_scripts' : ['ply=timelapsy.scripts.cli']},
+    entry_points = {'console_scripts' : ['ply=pylapsy.scripts.cli']},
 )

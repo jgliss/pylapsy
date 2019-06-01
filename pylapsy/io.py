@@ -31,3 +31,4 @@ def find_image_files(dir_name, file_pattern='*'):
 
 def get_test_images_deshake():
     raise NotImplementedError
+    
