@@ -18,7 +18,57 @@ def imread(file_path):
     ndarray
         image data
     """
-    cv2.imread(file_path)#opencv loads BGR as default
+    return cv2.imread(file_path)#opencv loads BGR as default
+
+def imshow(img_arr, add_cbar=False, cbar_label=None,cmap=None, ax=None):
+    """Show image
+    
+    Works both for grayscale and color images. For color images, it is assumed
+    that the index is ordered in BGR, i.e. that the image was read using 
+    :func:`imread` (which uses :func:`cv2.imread`).
+    
+    Parameters
+    ----------
+    img_arr : ndarray
+        image data
+    add_cbar : bool
+        if True, a color bar is added to the figure
+    cbar_label : str, optional
+        label of colorbar (only relevant if `add_cbar` is True)
+    cmap : str, optional
+        colormap that is supposed to be used
+    ax : axes
+        matplotlib axes instance that is supposed to be used for display
+        
+    Returns
+    -------
+    ax 
+    """
+    if ax is None:
+        import matplotlib.pyplot as plt
+        figh = 8
+        h, w = img_arr.shape[:2]
+        r = w / h
+        figw = figh * r
+        if add_cbar:
+            figw += 3
+            if cbar_label:
+                figw += 1
+            
+        fig, ax = plt.subplots(1, 1, figsize=(figw, figh))
+    else:
+        fig = ax.figure
+    if img_arr.ndim == 2 and cmap is None:
+        cmap = 'gray'
+    else:
+        img_arr = img_arr[..., ::-1]
+    disp = ax.imshow(img_arr, cmap=cmap)
+    if add_cbar:
+        cb = fig.colorbar(disp, ax=ax)
+        if isinstance(cbar_label, str):
+            cb.set_label(cbar_label)
+    fig.tight_layout()
+    return ax
 
 # Convert to gray-scale
 def to_gray(img_arr):
@@ -48,6 +98,7 @@ def apply_sobel_hor(img_arr, **kwargs):
         input grayscale image
     **kwargs
         additional keyword args passed to :func:`cv2.Sobel`
+    
     Returns
     -------
     ndarray
@@ -56,6 +107,20 @@ def apply_sobel_hor(img_arr, **kwargs):
     return np.uint8(np.abs(cv2.Sobel(img_arr, cv2.CV_64F, 1, 0, **kwargs)))
 
 def apply_sobel_vert(img_arr, **kwargs):
+    """Vertical sobel filter (wrapper for :func:`cv2.Sobel`)
+    
+    Parameters
+    ----------
+    img_arr : ndarray
+        input grayscale image
+    **kwargs
+        additional keyword args passed to :func:`cv2.Sobel`
+    
+    Returns
+    -------
+    ndarray
+        filtered input image array
+    """
     return np.uint8(np.abs(cv2.Sobel(img_arr, cv2.CV_64F, 0, 1, **kwargs)))
 
 def apply_sobel_2d(img_arr, **kwargs): 
@@ -68,7 +133,9 @@ def apply_sobel_2d(img_arr, **kwargs):
     ----------
     img_arr : ndarray
         input grayscale image
-    
+    **kwargs
+        additional keyword args passed to :func:`cv2.Sobel`
+        
     Returns
     -------
     ndarray
@@ -112,13 +179,65 @@ def find_good_features_to_track(img_arr, **params):
     params.update(**params)
     return cv2.goodFeaturesToTrack(img_arr, **params)
 
-def compute_flow_lk(first_gray, second_gray, points_to_track=None, 
-                    **params):
+def plot_feature_points(points, ax, marker='x',markersize=20, 
+                        color='r'):
+    """Plot feature points into image
+    
+    Parameters
+    ----------
+    points : ndarray
+        feature points either retrieved using 
+        :func:`find_good_features_to_track` or :func:`compute_flow_lk`
+    ax : axes
+        matplotlib axes instance in which the points are supposed to be 
+        plotted (e.g. output of :func:`imshow`)
+    marker : str
+        marker that is supposed to be used to plot the points
+    markersize : int
+        size of markers
+    color : str
+        color of points
+    
+    Returns
+    -------
+    ax 
+    """
+    pp = points.ravel()
+    x = pp[0::2]
+    y = pp[1::2]
+    
+    ax.plot(x, y, marker=marker, markersize=markersize, 
+            color=color, ls='none')
+        
+    return ax
+
+def compute_flow_lk(img1, img2, points_to_track=None, **params):
     """Method that computes optical flow using Lucas-Kanade algorithm
     
+    Parameters
+    ----------
+    img1 : ndarray
+        first image
+    img2 : ndarray
+        next image
+    points_to_track : ndarray, optional
+        feature points that are used for tracking (e.g. output of 
+        :func:`find_good_features_to_track`). Uses 
+        :func:`find_good_features_to_track`, if unspecified.
+    **params
+        additional keyword args passed to 
+        :func:`cv2.calcOpticalFlowPyrLK`
+    
+    Returns
+    -------
+    ndarray
+        feature points in `img1` that could be used for successful tracking 
+        (corresponds to `points_to_track`)
+    ndarray
+        same points as found in level 2
     """
     if points_to_track is None:
-        p0 = find_good_features_to_track(first_gray)
+        p0 = find_good_features_to_track(img1)
     else:
         p0 = points_to_track
     
@@ -130,7 +249,8 @@ def compute_flow_lk(first_gray, second_gray, points_to_track=None,
     params.update()
      
     # calculate optical flow
-    p1, st, err = cv2.calcOpticalFlowPyrLK(first_gray, second_gray, p0, None, **lk_params)
+    p1, st, err = cv2.calcOpticalFlowPyrLK(img1, img2, p0, None, 
+                                           **lk_params)
     
     # Sanity check
     assert p0.shape == p1.shape 
@@ -139,43 +259,45 @@ def compute_flow_lk(first_gray, second_gray, points_to_track=None,
     # Select good points
     return (p0[st==1], p1[st==1])
     
-def find_affine_partial2d(good_this=None, good_next=None, **flowlk_kwargs):
-    if good_this is None:
-        good_this, good_next = _compute_flow_lk(**flowlk_kwargs)
+def find_affine_partial2d(p0=None, p1=None, **kwargs):
+    """Find 2D affine transformation matrix
     
-    #Find transformation matrix
-    return cv2.estimateAffinePartial2D(good_this, good_next)[0]
+    Find affine transformation matrix for translation and rotation based on 
+    input coordinates. Wrapper for method :func:`cv2.estimateAffinePartial2D`.
+    
+    Note
+    ----
+    Input feature points `p0` and `p1` can be retrieved from 2 images using 
+    method :func:`compute_flow_lk`.
+    
+    Parameters
+    ----------
+    p0 : ndarray
+        coordinates of feature points in first image
+    p1 : ndarrax
+        coordinates of feature points in next image
+    
+    Returns
+    -------
+    ndarray
+        transformation matrix
+    """
+    return cv2.estimateAffinePartial2D(p0, p1)[0]
     
 def find_homography(good_this=None, good_next=None, **flowlk_kwargs):
     if good_this is None:
-        good_this, good_next = _compute_flow_lk(**flowlk_kwargs)
+        good_this, good_next = compute_flow_lk(**flowlk_kwargs)
     
     return cv2.findHomography(good_this, good_next)[0]
 
+
 def find_shift(first_gray, second_gray, **feature_lk_params):
-    good_this, good_next = _compute_flow_lk(first_gray, second_gray, **feature_lk_params)
+    good_this, good_next = compute_flow_lk(first_gray, second_gray, **feature_lk_params)
     
     m = find_affine_partial2d(good_this, good_next)
     shift = (m[0,2], m[1,2])
     da = np.arctan2(m[1,0], m[0,0])
     return (shift, da, m)
-
-## scikit-image
-def find_shift_ski(first_gray, second_gray):
-    first_edges = ski.filters.sobel(first_gray)
-    second_edges =ski.filters.sobel(second_gray)
-    
-    shift, error, diffphase = register_translation(first_edges, second_edges, 100)
-    return shift
-
-# Shift image
-def shift_image_ski(image, shift=None):
-    if shift is None:
-        shift = (0,0)
-    dy, dx = shift
-    tf_shift = ski.transform.SimilarityTransform(translation=[-dx, -dy])
-    shifted = ski.transform.warp(image, tf_shift)
-    return shifted
 
 def shift_image(image, m=None):
     if m is None: # no shift
@@ -226,3 +348,33 @@ def deshake(imfile1, imfile2):
     (shift, da, M) = find_shift(first_gray, second_gray)
     shifted = shift_image(second, M)
     return (crop_shift(first, shift, cv=True), crop_shift(shifted, shift, cv=True))
+
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    plt.close('all')
+    from pylapsy.helpers import get_test_img
+    
+    f1 = get_test_img(1)
+    f2 = get_test_img(2)
+    
+    img1 = imread(f1)
+    img2 = imread(f2)
+    
+    gray1 = to_gray(img1)
+    gray2 = to_gray(img2)
+    
+    ax1 = imshow(gray1, True)
+    
+    imshow(apply_sobel_2d(gray1))
+    
+    p0 = find_good_features_to_track(gray1)
+    
+    (p0, p1) = compute_flow_lk(gray1, gray2, p0)
+    (p1r, p0r) = compute_flow_lk(gray2, gray1)
+    
+    ax1 = plot_feature_points(p0, ax=ax1)
+    ax1 = plot_feature_points(p1, ax=ax1, color='lime')
+    
+    M = find_affine_partial2d(p0, p1)
+    
+    print(M)

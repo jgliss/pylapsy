@@ -9,6 +9,7 @@
 # Email: jonasgliss@gmail.com 
 import pylapsy.helpers as h
 import os
+
 def test_data_dir():
     ok = True
     try:
