@@ -20,7 +20,8 @@ def imread(file_path):
     """
     return cv2.imread(file_path)#opencv loads BGR as default
 
-def imshow(img_arr, add_cbar=False, cbar_label=None,cmap=None, ax=None):
+def imshow(img_arr, add_cbar=False, cbar_label=None,cmap=None, ax=None, 
+           **kwargs):
     """Show image
     
     Works both for grayscale and color images. For color images, it is assumed
@@ -39,6 +40,8 @@ def imshow(img_arr, add_cbar=False, cbar_label=None,cmap=None, ax=None):
         colormap that is supposed to be used
     ax : axes
         matplotlib axes instance that is supposed to be used for display
+    **kwargs
+        additional keyword args passed to :func:`imshow`
         
     Returns
     -------
@@ -62,7 +65,7 @@ def imshow(img_arr, add_cbar=False, cbar_label=None,cmap=None, ax=None):
         cmap = 'gray'
     else:
         img_arr = img_arr[..., ::-1]
-    disp = ax.imshow(img_arr, cmap=cmap)
+    disp = ax.imshow(img_arr, cmap=cmap, **kwargs)
     if add_cbar:
         cb = fig.colorbar(disp, ax=ax)
         if isinstance(cbar_label, str):
@@ -147,7 +150,7 @@ def apply_sobel_2d(img_arr, **kwargs):
 # Find shift between 2 images (deshaking)
 ## OpenCV
     
-def find_good_features_to_track(img_arr, **params):
+def find_good_features_to_track(img_arr, plot=False, **params):
     """Wrapper for :func:`cv2.goodFeaturesToTrack`
     
     See `here <https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_feature2d/
@@ -158,6 +161,8 @@ def find_good_features_to_track(img_arr, **params):
     img_arr : ndarray
         image data from suitable tracking coordinates are supposed to be 
         identified
+    plot : bool
+        option that plots the detected points onto the input image
     **params
         additional input parameters that are passed to 
         :func:`cv2.goodFeaturesToTrack` 
@@ -177,10 +182,14 @@ def find_good_features_to_track(img_arr, **params):
                   minDistance = 7,
                   blockSize = 7)
     params.update(**params)
-    return cv2.goodFeaturesToTrack(img_arr, **params)
+    p0 = cv2.goodFeaturesToTrack(img_arr, **params)
+    if plot:
+        ax = imshow(img_arr)
+        plot_feature_points(p0, ax=ax)
+    return p0
 
-def plot_feature_points(points, ax, marker='x',markersize=20, 
-                        color='r'):
+def plot_feature_points(points, ax, marker='+',markersize=20, 
+                        color='r', mew=3):
     """Plot feature points into image
     
     Parameters
@@ -197,6 +206,8 @@ def plot_feature_points(points, ax, marker='x',markersize=20,
         size of markers
     color : str
         color of points
+    mew : int
+        marker edge width
     
     Returns
     -------
@@ -276,20 +287,42 @@ def find_affine_partial2d(p0=None, p1=None, **kwargs):
         coordinates of feature points in first image
     p1 : ndarrax
         coordinates of feature points in next image
-    
+    **kwargs
+        additional keyword args passed to :func:`cv2.estimateAffinePartial2D`
+        
     Returns
     -------
     ndarray
         transformation matrix
     """
-    return cv2.estimateAffinePartial2D(p0, p1)[0]
+    return cv2.estimateAffinePartial2D(p0, p1, **kwargs)[0]
     
-def find_homography(good_this=None, good_next=None, **flowlk_kwargs):
-    if good_this is None:
-        good_this, good_next = compute_flow_lk(**flowlk_kwargs)
+def find_homography(p0=None, p1=None):
+    """Find homography matrix
     
-    return cv2.findHomography(good_this, good_next)[0]
-
+    Find homography matrix based on 
+    input coordinates. Wrapper for method :func:`cv2.estimateAffinePartial2D`.
+    
+    Note
+    ----
+    Input feature points `p0` and `p1` can be retrieved from 2 images using 
+    method :func:`compute_flow_lk`.
+    
+    Parameters
+    ----------
+    p0 : ndarray
+        coordinates of feature points in first image
+    p1 : ndarrax
+        coordinates of feature points in next image
+    **kwargs
+        additional keyword args passed to :func:`cv2.estimateAffinePartial2D`
+        
+    Returns
+    -------
+    ndarray
+        transformation matrix
+    """
+    return cv2.findHomography(p0, p1)[0]
 
 def find_shift(first_gray, second_gray, **feature_lk_params):
     good_this, good_next = compute_flow_lk(first_gray, second_gray, **feature_lk_params)
@@ -307,6 +340,8 @@ def shift_image(image, m=None):
 
     m[0,2] = -m[0,2] 
     m[1,2] = -m[1,2]
+    
+    
     if m.shape == (2, 3):
         shifted = cv2.warpAffine(image, m, (image.shape[1], image.shape[0]))
     elif m.shape == (3,3):
