@@ -325,7 +325,31 @@ def find_homography(p0=None, p1=None):
     return cv2.findHomography(p0, p1)[0]
 
 def find_shift(first_gray, second_gray, **feature_lk_params):
-    good_this, good_next = compute_flow_lk(first_gray, second_gray, **feature_lk_params)
+    """Find shift between two input images using lukas kanade optical flow
+    
+    Detects shift at suitable points to track in both images (e.g. corners)
+    and based on detected shifts, finds the affine transformation that 
+    can be used to shift and rotate the second image such that it matches best
+    the first image
+    
+    Parameters
+    ----------
+    first_gray : ndarray
+        first image (gray scale)
+    second_gray : ndarray
+        second image
+    **feature_lk_params
+        additional, optinal input keyword args passed to 
+        :func:`compute_flow_lk`
+    
+    Returns
+    -------
+    
+    """
+    (good_this, 
+     good_next) = compute_flow_lk(first_gray, 
+                                  second_gray, 
+                                  **feature_lk_params)
     
     m = find_affine_partial2d(good_this, good_next)
     shift = (m[0,2], m[1,2])
@@ -338,11 +362,9 @@ def shift_image(image, m=None):
         m[0,0] = 1
         m[1,1] = 1
 
-    m[0,2] = -m[0,2] 
-    m[1,2] = -m[1,2]
-    
-    
     if m.shape == (2, 3):
+        m[0,2] = -m[0,2] 
+        m[1,2] = -m[1,2]
         shifted = cv2.warpAffine(image, m, (image.shape[1], image.shape[0]))
     elif m.shape == (3,3):
         shifted = cv2.warpPerspective(image, m, (image.shape[1], image.shape[0]))
@@ -372,13 +394,37 @@ def crop_shift(img, shift, cv=True):
         y0 = -dy+1
     return img[y0:y1, x0:x1]
 
-# Sum it up: methods that do everything from reading of both images to deshaking them
-def deshake(imfile1, imfile2):
-    first = imread(imfile1)
-    second = imread(imfile2)
+
+
     
-    first_gray = to_gray(first)
-    second_gray = to_gray(second)
+            
+class Deshaker(object):
+    
+    def __init__(self, images):
+        pass
+        
+def to_pylapsy_image(input):
+    """Convert input to instance of pylapsy.Image class
+    
+    Accepts valid image file path or numpy array
+    """
+    from pylapsy import Image
+    if isinstance(input, Image):
+        return input
+    elif isinstance(input, np.ndarray):
+        return Image(input)
+    
+# Sum it up: methods that do everything from reading of both images to deshaking them
+def deshake(img1, img2):
+    
+    first = to_pylapsy_image(img1)
+    second = to_pylapsy_image(img2)
+    
+    if not first.is_gray:
+        first.to_gray(inplace=True)
+    if not second.is_gray:
+        second.to_gray(inplace=True)
+        
     
     (shift, da, M) = find_shift(first_gray, second_gray)
     shifted = shift_image(second, M)

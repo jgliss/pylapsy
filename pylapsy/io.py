@@ -12,18 +12,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Note
-----
-
-This module is based on the repo:
-    
-    https://github.com/pmoret/deshake
-    
-It was modified for python 3 support and some of the code was moved into other
-modules of timelapse_tools.
-"""
-
 import glob
 
 def find_image_files(dir_name, file_pattern='*'):

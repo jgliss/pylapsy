@@ -2,7 +2,6 @@
 import logging
 from os.path import abspath, dirname
 from pkg_resources import get_distribution
-from matplotlib import rcParams
 
 def _init_supplemental():
     return (get_distribution('pylapsy').version, abspath(dirname(__file__)))
@@ -73,3 +72,10 @@ def _check_requirements():
     except BaseException:
         CV2AVAILABLE = False
     return (CV2AVAILABLE)
+
+def init_add_data():
+    import os
+    from .helpers import data_dir
+    BASEDIR_DATA = data_dir()
+    DATADIR_DESHAKE_TEST = os.path.join(BASEDIR_DATA, 'test_data', 'deshake')
+    return (BASEDIR_DATA, DATADIR_DESHAKE_TEST)

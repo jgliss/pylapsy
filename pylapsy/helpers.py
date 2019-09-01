@@ -10,11 +10,17 @@
 import os
 
 def data_dir():
+    """Basic data directory"""
     from pylapsy import __dir__
     d = os.path.join(__dir__, 'data')
     if not os.path.exists(d):
         raise FileNotFoundError('Fatal: could not find pylapsy data directory')
     return os.path.abspath(d)
+
+def get_testimg_files_deshake():
+    from pylapsy import DATADIR_DESHAKE_TEST
+    import glob
+    return glob.glob('{}/*.jpg'.format(DATADIR_DESHAKE_TEST))
 
 def get_test_img(which=1):
     """Get file path of test image shipped with installation
@@ -50,6 +56,9 @@ def get_test_img(which=1):
 def load_exif_from_image_file(file_path):
     """Try load EXIF meta information from image file"""
     raise NotImplementedError('Coming soon...')
+    
+if __name__ == '__main__':
+    print(get_testimg_files_deshake())
     
     
 

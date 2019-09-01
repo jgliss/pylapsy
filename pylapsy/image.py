@@ -100,9 +100,12 @@ class Image(object):
                 raise ValueError('Need valid file path ...')
             img = cv2.imread(input)
             self.meta['file_path'] = input
-        else:
+        elif isinstance(input, np.ndarray):
             img = input 
-    
+        else:
+            raise ValueError('Invalid input in Image class: need valid image '
+                             'file path or loaded numpy array, got {}'
+                             .format(type(input)))
         self._img = img
     
     def duplicate(self):
@@ -137,7 +140,11 @@ class Image(object):
                                           .format(self.shape, val.shape))
             self._img += val._img
             self.meta.merge_other(val.meta)
-        
+    
+    def show(self, **kwargs):
+        """Show image"""
+        return utils.imshow(self.img, **kwargs)
+    
     def _get_shape(self):
         return self.img.shape
     
