@@ -57,6 +57,9 @@ class ImageList(object):
             img = Image(img)
         return img
     
+    def __len__(self):
+        return self.totnum
+    
     def __getitem__(self, val):
         """Get image at input index"""
         return self.get_image(val)
@@ -78,5 +81,5 @@ if __name__ == '__main__':
     lst = ImageList(ply.helpers.get_testimg_files_deshake())
     
     for i, image in enumerate(lst):
-        print(i, image.shape)
+        print(i, image.shape, image.min(), image.mean(), image.max())
         

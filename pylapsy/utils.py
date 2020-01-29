@@ -352,27 +352,29 @@ def find_shift(first_gray, second_gray, **feature_lk_params):
                                   **feature_lk_params)
     
     m = find_affine_partial2d(good_this, good_next)
-    shift = (m[0,2], m[1,2])
+    dx, dy = m[0,2], m[1,2]
     da = np.arctan2(m[1,0], m[0,0])
-    return (shift, da, m)
+    return ((dx, dy), da, m)
 
-def shift_image(image, m=None):
+def shift_image(img_arr, m=None):
+    
     if m is None: # no shift
         m = np.zeros((2,3))
         m[0,0] = 1
         m[1,1] = 1
-
+    sh =  img_arr.shape   
+    sh = (sh[1], sh[0])
     if m.shape == (2, 3):
         m[0,2] = -m[0,2] 
         m[1,2] = -m[1,2]
-        shifted = cv2.warpAffine(image, m, (image.shape[1], image.shape[0]))
+        return cv2.warpAffine(img_arr, m, sh)
     elif m.shape == (3,3):
-        shifted = cv2.warpPerspective(image, m, (image.shape[1], image.shape[0]))
+        return cv2.warpPerspective(img_arr, m, sh)
     else:
         raise ValueError('Invalid input for transormation matrix m')
-    return shifted
 
 def crop_shift(img, shift, cv=True):
+    raise NotImplementedError('This method needs review')
     if cv:
         dx, dy = shift
     else:
@@ -395,14 +397,6 @@ def crop_shift(img, shift, cv=True):
     return img[y0:y1, x0:x1]
 
 
-
-    
-            
-class Deshaker(object):
-    
-    def __init__(self, images):
-        pass
-        
 def to_pylapsy_image(input):
     """Convert input to instance of pylapsy.Image class
     
@@ -413,9 +407,11 @@ def to_pylapsy_image(input):
         return input
     elif isinstance(input, np.ndarray):
         return Image(input)
+    raise NotImplementedError('Invalid input, only images provided as numpy '
+                              'arrays are supported')
     
 # Sum it up: methods that do everything from reading of both images to deshaking them
-def deshake(img1, img2):
+def deshake(img1, img2, crop=False):
     
     first = to_pylapsy_image(img1)
     second = to_pylapsy_image(img2)
@@ -426,14 +422,18 @@ def deshake(img1, img2):
         second.to_gray(inplace=True)
         
     
-    (shift, da, M) = find_shift(first_gray, second_gray)
-    shifted = shift_image(second, M)
-    return (crop_shift(first, shift, cv=True), crop_shift(shifted, shift, cv=True))
+    (shift, da, M) = find_shift(first.img, second.img)
+    shifted = shift_image(second.img, M)
+    if crop:
+        first = crop_shift(first, shift, cv=True)
+        shifted = crop_shift(shifted, shift, cv=True)
+    return (first, shifted)
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     plt.close('all')
     from pylapsy.helpers import get_test_img
+    from pylapsy.image import Image
     
     f1 = get_test_img(1)
     f2 = get_test_img(2)
@@ -445,9 +445,8 @@ if __name__ == '__main__':
     gray2 = to_gray(img2)
     
     ax1 = imshow(gray1, True)
-    
-    imshow(apply_sobel_2d(gray1))
-    
+    #ax2 = imshow(gray2, True)
+   
     p0 = find_good_features_to_track(gray1)
     
     (p0, p1) = compute_flow_lk(gray1, gray2, p0)
@@ -459,3 +458,8 @@ if __name__ == '__main__':
     M = find_affine_partial2d(p0, p1)
     
     print(M)
+    
+    f11, f22 = deshake(img1, img2)
+    
+    f11.show()
+    f22.show()

@@ -8,6 +8,24 @@
 # GitHub: jgliss
 # Email: jonasgliss@gmail.com 
 import os
+from numbers import Number
+
+def isnumeric(val):
+    """Check if input value is numeric
+    
+    Parameters
+    ----------
+    val
+        input value to be checked
+    
+    Returns
+    -------
+    bool 
+        True, if input value corresponds to a range, else False.
+    """
+    if isinstance(val, Number):
+        return True
+    return False
 
 def data_dir():
     """Basic data directory"""

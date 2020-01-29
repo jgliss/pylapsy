@@ -120,11 +120,27 @@ class Image(object):
         img.edit_log.update(self.edit_log)
         return img
         
+    def mean(self):
+        """Mean value of image data"""
+        return self._img.mean()
+    
+    def min(self):
+        """Minimum values of image data"""
+        return self._img.min()
+    
+    def max(self):
+        """Maximum value of image data"""
+        return self._img.max()
+    
     def to_gray(self, inplace=True):
-        if inplace:
-            return self.duplicate().to_gray(inplace=False)
-        self.img = utils.to_gray(self.img)
-        return self
+        
+        if not inplace:
+            
+            img = self.duplicate()
+        else:
+            img = self
+        img._img = utils.to_gray(img.img)
+        return img
     
     def load_test_img(self):
         """Loads test image"""
@@ -170,10 +186,11 @@ class Image(object):
         return s  
     
 if __name__ == '__main__':
-    
+    import matplotlib.pyplot as plt
+    plt.close('all')
     img = Image()
     img.load_test_img()
     
     print(img)
     
-    
+    img.show()

@@ -109,5 +109,8 @@ timelapsy/data/
 # development code
 dev/**/*.jpg
 
+# videos created in development directory
+dev/**/*.avi
+
 # image files
 *.jpg
