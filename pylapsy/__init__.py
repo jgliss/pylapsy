@@ -20,10 +20,13 @@ if not CV2AVAILABLE:
     
 BASEDIR_DATA, DATADIR_DESHAKE_TEST = init_add_data()
 
+
+from .defaults import defaults
 # Top-level classes
 from .image import Image
 from .imagelist import ImageList
 from .image_meta_data import ImageMetaData
+from .deshaker import Deshaker
 
 # Modules
 from . import image
@@ -32,5 +35,10 @@ from . import io
 from . import utils
 from . import helpers
 
+# high level methods
+from .highlevel_methods import deshake
+
+# CLI
+from . import scripts
 
 

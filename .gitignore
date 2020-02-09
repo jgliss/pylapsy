@@ -114,3 +114,7 @@ dev/**/*.avi
 
 # image files
 *.jpg
+*.avi
+
+# Other directories
+.idea

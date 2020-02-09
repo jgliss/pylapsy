@@ -1,5 +1,17 @@
+# -*- coding: utf-8 -*-
+#
+# This module is part of pylapsy. 
+# It is licensed under a GPL-3.0 license, for details see LICENSE file.
+#
+# Author: Jonas Gliß
+# Copyright (C) 2019 Jonas Gliss (jonasgliss@gmail.com) 
+# GitHub: jgliss
+# Email: jonasgliss@gmail.com 
 import cv2
 import numpy as np
+
+from pylapsy.helpers import isnumeric
+from pylapsy import defaults
 
 def imread(file_path):
     """Read image file using :func:`cv2.imread`
@@ -19,6 +31,23 @@ def imread(file_path):
         image data
     """
     return cv2.imread(file_path)#opencv loads BGR as default
+
+def imsave(img_arr, path):
+    """Save image files using :func:`cv2.imwrite`
+    
+    Parameters
+    ----------
+    img_arr : ndarray
+        image data
+    path : str
+        destination of image
+    
+    Returns
+    -------
+    bool
+        success or not
+    """
+    return cv2.imwrite(path, img_arr)
 
 def imshow(img_arr, add_cbar=False, cbar_label=None,cmap=None, ax=None, 
            **kwargs):
@@ -177,12 +206,15 @@ def find_good_features_to_track(img_arr, plot=False, **params):
         print_log.warning('Input should be gray-scale...')
         
     # default params
-    params = dict(maxCorners = 100,
-                  qualityLevel = 0.3,
-                  minDistance = 7,
-                  blockSize = 7)
-    params.update(**params)
-    p0 = cv2.goodFeaturesToTrack(img_arr, **params)
+    ft_params = defaults['feature_params']
+# =============================================================================
+#     dict(maxCorners = 100,
+#                   qualityLevel = 0.3,
+#                   minDistance = 7,
+#                   blockSize = 7)
+# =============================================================================
+    ft_params.update(**params)
+    p0 = cv2.goodFeaturesToTrack(img_arr, **ft_params)
     if plot:
         ax = imshow(img_arr)
         plot_feature_points(p0, ax=ax)
@@ -253,11 +285,9 @@ def compute_flow_lk(img1, img2, points_to_track=None, **params):
         p0 = points_to_track
     
     # Parameters for lucas kanade optical flow
-    lk_params = dict( winSize  = (15,15),
-                      maxLevel = 2,
-                      criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+    lk_params = defaults['lk_params']
     
-    params.update()
+    lk_params.update(params)
      
     # calculate optical flow
     p1, st, err = cv2.calcOpticalFlowPyrLK(img1, img2, p0, None, 
@@ -339,8 +369,9 @@ def find_shift(first_gray, second_gray, **feature_lk_params):
     second_gray : ndarray
         second image
     **feature_lk_params
-        additional, optinal input keyword args passed to 
-        :func:`compute_flow_lk`
+        additional, optional input keyword args passed to 
+        :func:`compute_flow_lk`. Default settings for lukas kanade can be 
+        found in :mod:`defaults`
     
     Returns
     -------
@@ -410,6 +441,53 @@ def to_pylapsy_image(input):
     raise NotImplementedError('Invalid input, only images provided as numpy '
                               'arrays are supported')
     
+def get_crop(dx, dy, w0, h0):
+    """Get crop ROI based on shift (dx, dy) and original image size
+    
+    dx : float or ndarray
+        x shift or list of x shifts (for batch processing)
+    dy : float or ndarray
+        y shift or list of y shifts
+    w0 : int
+        original image width
+    h0 : int
+        original image height
+    
+    Returns
+    -------
+    tuple
+        4-element tuple containing ROI: (x0, x1, y0, y1)
+    """
+        
+    if isnumeric(dx):
+        dx = np.asarray([dx])
+    elif not isinstance(dx, np.ndarray):
+        dx = np.asarray(dx)
+    if not dx.ndim == 1:
+        raise ValueError('Invalid input for dx')
+    if isnumeric(dy):
+        dy = np.asarray([dy])
+    elif not isinstance(dy, np.ndarray):
+        dy = np.asarray(dy)
+    if not dy.ndim == 1:
+        raise ValueError('Invalid input for dx')
+    min_dx = dx.min()
+    max_dx = dx.max()
+    min_dy = dy.min()
+    max_dy = dy.max()
+    
+    x0, y0, x1, y1 = 0, 0, w0-1, h0-1
+    if min_dx < 0: # At least one image has been shifted to the left -> crop right
+        x1 -= -int(min_dx) - 1
+    if max_dx > 0: # at least one image has been shifted to the right -> crop left
+        x0 += int(max_dx) + 1
+    if min_dy < 0: # at least one image has been shifted to the top -> crop bottom 
+        y1 -= -int(min_dy) - 1
+    if max_dy > 0: # at least one image has been shifted to the bottom -> crop top
+        y0 += int(max_dy) + 1
+        
+    return (x0, x1, y0, y1)
+
 # Sum it up: methods that do everything from reading of both images to deshaking them
 def deshake(img1, img2, crop=False):
     
@@ -433,7 +511,6 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     plt.close('all')
     from pylapsy.helpers import get_test_img
-    from pylapsy.image import Image
     
     f1 = get_test_img(1)
     f2 = get_test_img(2)

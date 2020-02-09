@@ -161,6 +161,17 @@ class Image(object):
         """Show image"""
         return utils.imshow(self.img, **kwargs)
     
+    def save(self, path):
+        """Save image to disk
+        
+        Parameters
+        ----------
+        path : str
+            path and filename of image
+        """
+        if not utils.imsave(self.img, path):
+            raise IOError('Failed to save image')
+            
     def _get_shape(self):
         return self.img.shape
     

@@ -7,20 +7,13 @@
 # Copyright (C) 2019 Jonas Gliss (jonasgliss@gmail.com) 
 # GitHub: jgliss
 # Email: jonasgliss@gmail.com 
-import pylapsy.helpers as h
-import os
 
-def test_data_dir():
-    ok = True
-    try:
-        h.data_dir()
-    except FileNotFoundError:
-        ok = False
-    assert ok
-    
-def test_get_test_image():
-    f1 = os.path.basename(h.get_test_img(which=1))
-    f2 = os.path.basename(h.get_test_img(which=2))
-    
-    assert f1 == 'test_img1.jpg'
-    assert f2 == 'test_img2.jpg'
+import pylapsy.helpers as h
+import pytest
+
+def test_isnumeric():
+    assert h.isnumeric(3)
+    assert not h.isnumeric('bla')
+
+if __name__=='__main__':
+    pytest.main(['test_helpers.py'])

@@ -75,7 +75,7 @@ def _check_requirements():
 
 def init_add_data():
     import os
-    from .helpers import data_dir
+    from .io import data_dir
     BASEDIR_DATA = data_dir()
     DATADIR_DESHAKE_TEST = os.path.join(BASEDIR_DATA, 'test_data', 'deshake')
     return (BASEDIR_DATA, DATADIR_DESHAKE_TEST)

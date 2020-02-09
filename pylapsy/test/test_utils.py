@@ -7,8 +7,9 @@
 # Copyright (C) 2019 Jonas Gliss (jonasgliss@gmail.com) 
 # GitHub: jgliss
 # Email: jonasgliss@gmail.com 
+
 import pytest
-import pylapsy.helpers as h
+import pylapsy.io as io
 import pylapsy.utils as u
 import numpy.testing as npt
 import numpy as np
@@ -68,18 +69,27 @@ H = np.array([[ 9.95498980e-01, -2.23218148e-03,  2.26185456e-01],
 
 @pytest.fixture(scope='session')
 def test_img1():
-    return u.imread(h.get_test_img(1))
+    return u.imread(io.get_test_img(1))
 
 @pytest.fixture(scope='session')
 def test_img2():
-    return u.imread(h.get_test_img(2))
+    return u.imread(io.get_test_img(2))
 
 def test_imread():
-    img = u.imread(h.get_test_img(1))
+    img = u.imread(io.get_test_img(1))
     assert type(img) == np.ndarray
     assert img.shape == (267, 400, 3), img.shape
     npt.assert_allclose(img.mean(), 142.634, rtol=1e-2)
 
+def test_get_crop():
+    roi = u.get_crop(-3, -4, 100, 60)
+    
+    assert roi == (0, 97, 0, 56)
+    
+    roi = u.get_crop([-12, 5], [-24, 13], 100, 60)
+    
+    assert roi == (6, 88, 14, 36)
+    
 def test_to_gray(test_img1):
     gray = u.to_gray(test_img1)
     assert type(gray) == np.ndarray
@@ -106,7 +116,7 @@ def test_compute_flow_lk(test_img1, test_img2):
     p01, p1 = u.compute_flow_lk(gray1, gray2, p0)
     
     npt.assert_array_equal(p0.ravel(), p01.ravel())
-    npt.assert_allclose(p1, PTS_SECOND)
+    npt.assert_allclose(p1, PTS_SECOND, rtol=1e-4)
     
 def test_find_affine_partial2d():
     npt.assert_allclose(M, u.find_affine_partial2d(PTS_FIRST, 
@@ -120,11 +130,13 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     plt.close('all')
     
-    f1 = h.get_test_img(1)
-    f2 = h.get_test_img(2)
+    f1 = io.get_test_img(1)
+    f2 = io.get_test_img(2)
     
     img1 = u.imread(f1)
     img2 = u.imread(f2)
+    
+    test_get_crop()
     
     test_imread()
     test_to_gray(img1)

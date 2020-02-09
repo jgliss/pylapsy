@@ -4,16 +4,34 @@ Created on Sun Sep  1 12:14:02 2019
 
 @author: Jonas
 """
+import os
+
 from pylapsy.image import Image
+from pylapsy import print_log
 
 class ImageList(object):
-    
+    """Object representing a list of images"""
     def __init__(self, input):
         self._images = None
         self._index = -1
         
         self.load_input(input)
     
+    @property
+    def files(self):
+        """List with image file paths"""
+        if self._images is None:
+            raise AttributeError('No image files are assigned to list')
+        return self._images
+    
+    @files.setter
+    def files(self, val):
+        self.load_input(val)
+        
+    @property
+    def filenames(self):
+        return [os.path.basename(x) for x in self._images]
+        
     @property
     def totnum(self):
         """Number of files in this list"""
@@ -35,6 +53,8 @@ class ImageList(object):
         return self.get_image(self._index + 1)
     
     def load_input(self, input):
+        if self._images is not None:
+            print_log.warning('Overwriting existing files in ImageList')
         if input is None:
             input = []
         elif isinstance(input, (tuple)):
