@@ -3,7 +3,7 @@
 
 # pylapsy
 
-Python toolbox for timelapse image processing
+Python toolbox for timelapse image processing.
 
 ## Want to contribute?
 
@@ -77,8 +77,3 @@ Collection of tools for post processing of timelapse image sequences, such as:
 
 Object oriented, supposedly supporting to use timelapsy as API, or CLI or
 potentially also providing a simple GUI or interactive jupyter dashboards.
-
-The idea is also, to try, whenever possible, to base on existing code such as
-
-- https://github.com/pmoret/deshake
-- https://github.com/MaxNoe/timelapse-deflicker
