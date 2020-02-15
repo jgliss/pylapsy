@@ -113,7 +113,6 @@ dev/**/*.jpg
 dev/**/*.avi
 
 # image files
-*.jpg
 *.avi
 
 # Other directories
