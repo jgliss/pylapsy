@@ -1,3 +1,5 @@
+![Python package](https://github.com/jgliss/pylapsy/workflows/Python%20package/badge.svg)
+
 # pylapsy
 
 Python toolbox for timelapse image processing
