@@ -31,6 +31,26 @@ type:
 ply -h
 ```
 
+which should give you something like
+
+```
+usage: ply [-h] [-d DIR] [-o OUTDIR] [--file_pattern FILE_PATTERN] task
+
+Command line interface of timelapsy
+
+positional arguments:
+  task                  Processing task that is supposed to be performed. Choose from: ['deshake', 'info']
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -d DIR, --dir DIR     Input directory containing timelapse sequence. Uses "." if unspecified
+  -o OUTDIR, --outdir OUTDIR
+                        Output directory for processed data. If unspecified a subdirectory "pylapsy_out" is created in
+                        current directory.
+  --file_pattern FILE_PATTERN
+                        Filename pattern used to identify image files (e.g. *.jpg)
+```
+
 to see help on the available commands. Then, feel free to type
 
 ```
