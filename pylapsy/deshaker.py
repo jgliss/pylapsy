@@ -7,6 +7,7 @@
 # Copyright (C) 2019 Jonas Gliss (jonasgliss@gmail.com) 
 # GitHub: jgliss
 # Email: jonasgliss@gmail.com 
+
 import cv2
 import numpy as np
 import os
@@ -90,9 +91,9 @@ class Deshaker(object):
         
         return self.results
         
-    def deshake(self, outdir=None, save_images=True, 
-                save_preview_video=True,
-                sequence_id=None, preview_fps=24):
+    def deshake(self, outdir=None, ref_index=None, sequence_id=None, 
+                save_images=True, save_preview_video=True,
+                preview_fps=24):
         """Method that deshakes images sequence and saves result
         
         Parameters
@@ -100,9 +101,18 @@ class Deshaker(object):
         outdir : str, optional
             output directory. If None, a subdirectory will be created in the 
             current directory
+        ref_index : int, optional
+            Index of reference image in sequence (all images are adjusted wrt
+            to this image, defaults to 0).
+        sequence_id : str, optional
+            name of the sequence (for output directory)
         save_images : bool
             if True, corrected images are saved
         save_preview_video : bool
+            if True, a preview video is saved
+        preview_fps : int
+            fps of preview video (if applicable)
+            
             
         """
         if sequence_id is None:

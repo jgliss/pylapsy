@@ -2,13 +2,6 @@
 API
 ***
 
-Deshaker
-========
-
-.. automodule:: pylapsy.deshaker
-   :members:
-   :undoc-members:
-
 Image
 ===========
 
@@ -29,6 +22,13 @@ Meta data
 .. automodule:: pylapsy.image_meta_data
    :members:
    :undoc-members:
+
+Deshaker
+========
+
+.. automodule:: pylapsy.deshaker
+  :members:
+  :undoc-members:
 
 I/O
 ===
@@ -55,6 +55,13 @@ Default settings
 ================
 
 .. automodule:: pylapsy.defaults
+   :members:
+   :undoc-members:
+
+High level scripts
+==================
+
+.. automodule:: pylapsy.highlevel_methods
    :members:
    :undoc-members:
 
