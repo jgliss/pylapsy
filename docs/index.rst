@@ -1,12 +1,13 @@
-Welcome to pylapsy
-==================
+pylapsy website and code documentation
+======================================
 
-Official code documentation web page of `pylapsy <https://github.com/jgliss/pylapsy>`__).
+Official code documentation web page of `pylapsy <https://github.com/jgliss/pylapsy>`__.
 
-pylapsy is a python toolbox for post-processing of timelapse imagery.
+pylapsy is a python toolbox for post-processing of timelapse image sequences. So far, this
+includes efficient algorithms for registering and correcting shaky timelapse sequences.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    api

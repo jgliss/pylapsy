@@ -44,20 +44,6 @@ Low-level utility methods
    :members:
    :undoc-members:
 
-Custom exceptions
-=================
-
-.. automodule:: pylapsy.exceptions
-   :members:
-   :undoc-members:
-
-Default settings
-================
-
-.. automodule:: pylapsy.defaults
-   :members:
-   :undoc-members:
-
 High level scripts
 ==================
 
@@ -68,6 +54,7 @@ High level scripts
 CLI
 ===
 
-.. automodule:: pylapsy.scripts.cli
-   :members:
-   :undoc-members:
+.. argparse::
+   :module: pylapsy.scripts.cli
+   :func: make_parser
+   :prog: ply
