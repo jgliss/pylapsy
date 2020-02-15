@@ -46,4 +46,4 @@ if __name__ == '__main__':
     data_dir = ply.DATADIR_DESHAKE_TEST
     
     outdir = os.path.join(data_dir, 'output_pylapsy')
-    result = deshake(data_dir, outdir=outdir)
+    deshake(data_dir, outdir=outdir)

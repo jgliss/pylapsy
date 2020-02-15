@@ -56,7 +56,7 @@ class Image(object):
             if no image data is assigned to this object
         """
         if not isinstance(self._img, np.ndarray):
-            raise AttributeError('Image object does not contain image data')
+            self._img = np.empty((1,1))
         return self._img
     
     @property

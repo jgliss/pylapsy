@@ -10,7 +10,7 @@
 """
 Command line interface of pylapsy
 
-@author: Jonas Gliss
+
 """
 
 from argparse import ArgumentParser
@@ -52,8 +52,14 @@ class Task(object):
         """CLI arguments required to perform this task"""
         return self.REQUIRES_ARGS[self.name]
 
-def cli():
+def make_parser():
+    """
+    Creates pylapsy ArgumentParser for CLI
     
+    Returns
+    -------
+    ArgumentParser
+    """
     p = ArgumentParser(description='Command line interface of timelapsy')
 
     p.add_argument('task',
@@ -69,6 +75,12 @@ def cli():
     p.add_argument('--file_pattern', default='*', 
                    help=('Filename pattern used to identify image files '
                          '(e.g. *.jpg)'))
+    return p
+
+def cli():
+    from pylapsy.highlevel_methods import deshake
+    
+    p = make_parser()
     
     args = p.parse_args()
     
@@ -78,21 +90,20 @@ def cli():
         print_info()
         sys.exit()
     
-    
-    imgdir = Path(args.dir)
-    
-    outdir = args.outdir
-    if outdir is None:
-        outdir = 'pylapsy_out'
-        if not os.path.exists(outdir):
-            os.mkdir(outdir)
-    outdir = Path(outdir)
-    if not imgdir.exists():
-        raise FileNotFoundError('Input directory does not exist: {}'
-                                .format(imgdir))
-
-    print('Haaaaa haaaaaaaa (NOTHING REALLY IMPLEMENTED YET)')
-    sys.exit()
+    elif task.name == 'deshake':
+        imgdir = Path(args.dir)
+        
+        outdir = args.outdir
+        if outdir is None:
+            outdir = 'pylapsy_out'
+            if not os.path.exists(outdir):
+                os.mkdir(outdir)
+        outdir = Path(outdir)
+        if not imgdir.exists():
+            raise FileNotFoundError('Input directory does not exist: {}'
+                                    .format(imgdir))
+        deshake(imgdir,outdir=outdir)
+        sys.exit()
         
 if __name__ == '__main__':
     

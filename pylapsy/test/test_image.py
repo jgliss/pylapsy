@@ -29,6 +29,7 @@ def test_meta(empty_img, example_img):
 
 if __name__ == '__main__':
     
-    pytest.main(["test_image"])
+    for k, v in Image().meta.items():
+        print(k, v)
     
     
