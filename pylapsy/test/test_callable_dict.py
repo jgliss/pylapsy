@@ -43,7 +43,9 @@ def test_merge_other(cdict):
                           d = 'blub')
     cdict1.merge_other(cdict2)
 
-    assert sorted(list(cdict1.values())) == [1, 2, 42, ['bla', 'blub']]
+    vals = list(cdict1.values())
+    for val in [1, 2, 42, ['bla', 'blub']]:
+        assert val in vals
 
 if __name__ == '__main__':
 
