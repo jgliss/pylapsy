@@ -25,7 +25,8 @@ setup(
     package_dir =   {'pylapsy'     :   'pylapsy'},
     packages    =   find_packages(exclude=['contrib', 'docs', 'tests*']),
     include_package_data    =   True,
-    package_data=   {},
+    package_data=   {'pylapsy': ['data/*.jpg',
+                                 'data/test_data/deshake/*.jpg']},
     install_requires  =   [],
     extras_require={},
 
