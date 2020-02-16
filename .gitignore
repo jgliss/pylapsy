@@ -117,3 +117,6 @@ dev/**/*.avi
 
 # Other directories
 .idea
+
+# other output that may stick around
+pylapsy/data/test_data/deshake/output*
