@@ -14,11 +14,9 @@ jobs:
         miniconda-version: 'latest'
     - name: Display current environments
       run: conda info --envs
-    - name: Create new environment tlt
-      shell: bash -l {0}
+    - name: Update environment
       run: |
-        conda env create -n tlt -f ./environment.yml
-        conda activate tlt
+        conda env update -n test -f ./environment.yml
         conda info --envs
     #- name: Install libGL (for OpenCV)
     #  run: |
