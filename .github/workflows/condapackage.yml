@@ -15,12 +15,12 @@ jobs:
            activate-environment: anaconda-client-env
            environment-file: ./environment.yml
            auto-activate-base: false
-    - name: 
+    - name: Check environment
       shell: bash -l {0}
       run: |
-      conda info
-      conda list
-      conda info --envs
+        conda info
+        conda list
+        conda info --envs
     #- name: Install libGL (for OpenCV)
     #  run: |
     #    sudo apt-get update
