@@ -8,16 +8,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    #- uses: actions/checkout@v2
-    - uses: goanpeca/setup-miniconda@v1.0.2
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v1
       with:
-        miniconda-version: 'latest'
+        python-version: 3.8
+    - uses: s-weigand/setup-conda@v1.0.2
+    - name: Conda info
+      run: | 
+        conda --version
+        which python
+    #- uses: goanpeca/setup-miniconda@v1.0.2
+    #  with:
+    #    miniconda-version: 'latest'
     - name: Display current environments
       run: conda info --envs
     - name: Update environment
       run: |
-        conda env update -n test -f ./environment.yml
-        conda info --envs
+        echo Coming soon
     #- name: Install libGL (for OpenCV)
     #  run: |
     #    sudo apt-get update
