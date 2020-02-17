@@ -12,6 +12,9 @@ jobs:
     - uses: goanpeca/setup-miniconda@v1.0.2
       with:
         miniconda-version: 'latest'
+    - name: Display current environments
+      shell: bash -l {0}
+      run: conda info --envs
     - name: Create new environment tlt
       shell: bash -l {0}
       run: |
