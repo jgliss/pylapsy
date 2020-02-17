@@ -1,4 +1,5 @@
 ![Python package](https://github.com/jgliss/pylapsy/workflows/Python%20package/badge.svg)
+![conda-env](https://github.com/jgliss/pylapsy/workflows/conda-env/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/pylapsy/badge/?version=latest)](https://pylapsy.readthedocs.io/en/latest/?badge=latest)
 
 # pylapsy
