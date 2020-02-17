@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - uses: actions/checkout@v1
     - name: Update conda with environment.yml
       uses: matthewrmshin/conda-action@v1.1
       with:
