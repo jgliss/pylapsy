@@ -11,19 +11,24 @@ jobs:
     - uses: actions/checkout@v2
     - name: Setup Miniconda
       uses: goanpeca/setup-miniconda@v1.0.2
+      with:
+           activate-environment: anaconda-client-env
+           environment-file: ./environment.yml
+           auto-activate-base: false
+    - name: 
+      shell: bash -l {0}
+      run: |
+      conda info
+      conda list
+      conda info --envs
     #- name: Install libGL (for OpenCV)
     #  run: |
     #    sudo apt-get update
     #    sudo apt-get install -y libgl1-mesa-glx #libgl1-mesa-dev
-    - name : Check conda and python
-      run: |
-        conda --version
-        which python
-        conda info --envs
-    - name: Create conda environment
+    - name: Install pytest
       run: | 
-        conda env update -f ./environment.yml --prune
         conda install pytest
+        conda list pytest
     - name: Install pylapsy
       run: python ./setup.py install
     - name: Run pytest
