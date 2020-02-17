@@ -21,8 +21,7 @@ jobs:
         conda list
     - name: Create conda environment
       run: | 
-        conda env create -n tlt -f ./environment.yml
-        source activate tlt
+        conda env update -f ./environment.yml --prune
         conda install pytest
     - name: Install pylapsy
       run: python ./setup.py install
