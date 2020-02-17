@@ -8,16 +8,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    #- uses: actions/checkout@v2
     - uses: goanpeca/setup-miniconda@v1.0.2
       with:
         miniconda-version: 'latest'
-        activate-environment: tlt
-
-    - name: check installation
+    - name: Create new environment tlt
       run: |
-        conda info
-        conda list
+        conda env create -n tlt -f ./environment.yml
+        conda activate tlt
         conda info --envs
     #- name: Install libGL (for OpenCV)
     #  run: |
@@ -26,7 +24,9 @@ jobs:
     - name: Install pytest
       run: | 
         conda install pytest
+        conda info --envs
         conda list pytest
+        which python
     - name: Install pylapsy
       run: python ./setup.py install
     - name: Run pytest
