@@ -8,22 +8,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Run a one-line script
-      run: echo Hello, world!
-    - name: Run a multi-line script
-      run: |
-        echo Add other actions to build,
-        echo test, and deploy your project.
-    - name: conda-action
+    - name: Update conda with environment.yml
       uses: matthewrmshin/conda-action@v1.1
-      run: |
-        conda env create -n tlt -f ./environment.yml
-        conda activate tlt
-        conda install pytest
-        python setup.py install
+      with:
+        args: conda env update -f ./environment.yml
+    - name: Install pytest
+      uses: matthewrmshin/conda-action@v1.1
+      with:
+        args: conda install pytest
+    - name: Install pylapsy
+      uses: matthewrmshin/conda-action@v1.1
+      with:
+        args: python ./setup.py install
     - name: Run "pytest" with the Conda environment
-      uses: matthewrmshin/conda-action@v1
+      uses: matthewrmshin/conda-action@v1.1
       with:
         args: pytest
       
