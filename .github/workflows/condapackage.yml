@@ -1,4 +1,4 @@
-name: install-conda
+name: conda-env
 
 on: [push]
 
@@ -9,6 +9,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: Install libGL (for OpenCV)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgl1-mesa-dev
     - name: Update conda with environment.yml
       uses: matthewrmshin/conda-action@v1.1
       with:
