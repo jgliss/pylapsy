@@ -12,7 +12,7 @@ jobs:
     - name: Install libGL (for OpenCV)
       uses: matthewrmshin/conda-action@v1.1
       with:
-        args: sudo apt-get install libgl1-mesa-dev
+        args: apt-get install libgl1-mesa-dev
     - name: Update conda with environment.yml
       uses: matthewrmshin/conda-action@v1.1
       with:
