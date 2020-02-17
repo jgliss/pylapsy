@@ -9,16 +9,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: s-weigand/setup-conda@v1
-    - name: Install libGL (for OpenCV)
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libgl1-mesa-glx #libgl1-mesa-dev
+    - name: Setup Miniconda
+      uses: goanpeca/setup-miniconda@v1.0.2
+    #- name: Install libGL (for OpenCV)
+    #  run: |
+    #    sudo apt-get update
+    #    sudo apt-get install -y libgl1-mesa-glx #libgl1-mesa-dev
     - name : Check conda and python
       run: |
         conda --version
         which python
-        conda list
+        conda info --envs
     - name: Create conda environment
       run: | 
         conda env update -f ./environment.yml --prune
