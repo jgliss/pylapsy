@@ -1,0 +1,26 @@
+name: install-conda
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run a one-line script
+      run: echo Hello, world!
+    - name: Run a multi-line script
+      run: |
+        echo Add other actions to build,
+        echo test, and deploy your project.
+    - name: conda-action
+      uses: matthewrmshin/conda-action@v1.1
+      with:
+        args: conda env update -f ./environment.yml
+    - name: Run "pytest" with the Conda environment
+      uses: matthewrmshin/conda-action@v1
+      with:
+        args: pytest
+      
