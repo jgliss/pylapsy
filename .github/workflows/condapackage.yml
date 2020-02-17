@@ -10,9 +10,9 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Install libGL (for OpenCV)
-      run: |
-        apt-get update
-        apt-get install libgtk2.0-dev
+      uses: matthewrmshin/conda-action@v1.1
+      with:
+        args: sudo apt-get install libgl1-mesa-dev
     - name: Update conda with environment.yml
       uses: matthewrmshin/conda-action@v1.1
       with:
