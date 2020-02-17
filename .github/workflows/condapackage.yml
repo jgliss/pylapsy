@@ -25,7 +25,7 @@ jobs:
       run: conda info --envs
     - name: Update environment
       run: |
-        echo Coming soon
+        conda env update -n base -f ./environment.yml
     #- name: Install libGL (for OpenCV)
     #  run: |
     #    sudo apt-get update
