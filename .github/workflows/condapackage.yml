@@ -25,7 +25,7 @@ jobs:
         conda activate tlt
         conda install pytest
     - name: Install pylapsy
-        python ./setup.py install
+      run: python ./setup.py install
     - name: Run pytest
       run: pytest
       
