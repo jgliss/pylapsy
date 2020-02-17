@@ -9,14 +9,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Install libGL (for OpenCV)
-      uses: matthewrmshin/conda-action@v1.1
-      with:
-        args: apt-get install -y libgl1-mesa-glx #libgl1-mesa-dev
     - name: Update conda with environment.yml
       uses: matthewrmshin/conda-action@v1.1
       with:
         args: conda env update -f ./environment.yml
+    - name: Install libGL (for OpenCV)
+      uses: matthewrmshin/conda-action@v1.1
+      with:
+        args: apt-get install -y libgl1-mesa-glx #libgl1-mesa-dev
     - name: Install pytest
       uses: matthewrmshin/conda-action@v1.1
       with:
