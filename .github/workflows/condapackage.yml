@@ -8,25 +8,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Update conda with environment.yml
-      uses: matthewrmshin/conda-action@v1.1
-      with:
-        args: conda env update -f ./environment.yml
+    - uses: actions/checkout@v2
+    - uses: s-weigand/setup-conda@v1
     - name: Install libGL (for OpenCV)
-      uses: matthewrmshin/conda-action@v1.1
-      with:
-        args: apt-get install -y libgl1-mesa-glx #libgl1-mesa-dev
-    - name: Install pytest
-      uses: matthewrmshin/conda-action@v1.1
-      with:
-        args: conda install pytest
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgl1-mesa-glx #libgl1-mesa-dev
+    - name : Check conda and python
+      run: |
+        conda --version
+        which python
+        conda list
+    - name: Create conda environment
+      run: | 
+        conda env create -n tlt -f ./environment.yml
+        conda activate tlt
+        conda install pytest
     - name: Install pylapsy
-      uses: matthewrmshin/conda-action@v1.1
-      with:
-        args: python ./setup.py install
-    - name: Run "pytest" with the Conda environment
-      uses: matthewrmshin/conda-action@v1.1
-      with:
-        args: pytest
+        python ./setup.py install
+    - name: Run pytest
+      run: pytest
       
