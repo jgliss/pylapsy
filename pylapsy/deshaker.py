@@ -71,18 +71,19 @@ class Deshaker(object):
         
         totnum = len(imglist)
         
-        disp_each = int(totnum/10)
-        
+        disp_each = int(totnum/4)
+       
         print_log.info('Finding image shifts for {} images'.format(totnum))
         for i, img in enumerate(imglist):
-            if i%disp_each == 0:
+            if totnum > 10 and i%disp_each == 0:
                 print_log.info("{} %".format(i/totnum*100))
             gray = img.to_gray(inplace=False)
-            
             (dx, dy), da, M = utils.find_shift(ref, gray.img)
+            
             matrices[i]= M
             dxarr[i] = dx
             dyarr[i] = dy
+            
             logger.info('Image {}, dx={:.3f} dy={:.3f}'.format(i, dx, dy))    
         
         self.results['dxarr'] = dxarr
@@ -145,18 +146,23 @@ class Deshaker(object):
             wnew = x1 - x0
             hnew = y1 - y0
             videopath = os.path.join(outdir, 'preview_{}.avi'.format(sequence_id))
-            clip = cv2.VideoWriter(videopath,
-                             cv2.VideoWriter_fourcc('M','J','P','G'), 
-                             preview_fps, (wnew, hnew))
+            try:
+                clip = cv2.VideoWriter(videopath,
+                                 cv2.VideoWriter_fourcc('M','J','P','G'), 
+                                 preview_fps, (wnew, hnew))
+            except Exception as e:
+                save_preview_video = False
+                print_log.warning('Failed to init VideoWriter. Reason: {}'
+                                        .format(repr(e)))
          
         totnum = len(imglist)
         
-        disp_each = int(totnum/10)
+        disp_each = int(totnum/4)
         
         print_log.info('Shifting {} images'.format(totnum))
         
         for i, img in enumerate(imglist):
-            if i%disp_each == 0:
+            if totnum > 10  and i%disp_each == 0:
                 print_log.info("{} %".format(i/totnum*100))
             shifted = utils.shift_image(img.img, matrices[i])
             
@@ -171,10 +177,4 @@ class Deshaker(object):
         if save_preview_video:
             clip.release()
         print_log.info('Results are stored at {}'.format(outdir))
-            
-if __name__=='__main__':
-    import pylapsy as ply
-    
-    files = ply.io.get_test_images_deshake()
-    
-    print(files)
+     
