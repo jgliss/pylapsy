@@ -6,6 +6,10 @@
 
 Python toolbox for timelapse image processing.
 
+## Code documentation
+
+Documentation is available [here](https://pylapsy.readthedocs.io/).
+
 ## Want to contribute?
 
 This is a project I am working on in my free time (which is not a lot). Thus, I do not have a lot of time to work on this. If you like the idea (see below) feel free to get in touch and contribute.
