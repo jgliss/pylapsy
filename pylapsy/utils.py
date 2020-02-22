@@ -375,6 +375,12 @@ def find_shift(first_gray, second_gray, **feature_lk_params):
     
     Returns
     -------
+    tuple
+        (dx, dy) shift
+    float
+        rotation angle
+    ndarray
+        affine transformation matrix
     
     """
     (good_this, 

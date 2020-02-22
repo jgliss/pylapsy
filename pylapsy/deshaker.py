@@ -13,6 +13,8 @@ import numpy as np
 import os
 
 from pylapsy import utils, ImageList, logger, print_log
+from functools import partial
+from pylapsy.speedup_helpers import find_shifts_fast
 
 class Deshaker(object):
     """Interface for deshaking a series of images
@@ -46,7 +48,7 @@ class Deshaker(object):
         
         self._imglist = val
         
-    def find_shifts(self, ref_index=None):
+    def find_shifts(self, ref_index=None, multithread=True):
         """Find shifts for all images in :attr:`imglist`
         
         Parameters
@@ -65,33 +67,43 @@ class Deshaker(object):
             ref_index = 0
         imglist = self.imglist
         
-        dxarr, dyarr = np.empty(len(imglist)), np.empty(len(imglist))
-        matrices = np.empty((len(imglist), 2, 3))
         ref = imglist[ref_index].to_gray(inplace=False).img
         
+        if multithread:
+            res = find_shifts_fast(imglist.files, ref)
+            dx, dy, matrices = list(zip(*res))
+        else:
+            dx, dy, matrices = self._find_shifts(imglist, ref)
+        
+        self.results['dxarr'] = dx
+        self.results['dyarr'] = dy
+        self.results['matrices'] = matrices
+        return self.results
+    
+    @staticmethod
+    def _find_shifts(imglist, ref):
+        
+        dx, dy, matrices = [],[],[]
         totnum = len(imglist)
         
         disp_each = int(totnum/4)
        
         print_log.info('Finding image shifts for {} images'.format(totnum))
+        
         for i, img in enumerate(imglist):
             if totnum > 10 and i%disp_each == 0:
                 print_log.info("{} %".format(i/totnum*100))
             gray = img.to_gray(inplace=False)
-            (dx, dy), da, M = utils.find_shift(ref, gray.img)
+            (_dx, _dy), da, M = utils.find_shift(ref, gray.img)
             
-            matrices[i]= M
-            dxarr[i] = dx
-            dyarr[i] = dy
+            matrices.append(M)
+            dx.append(_dx)
+            dy.append(_dy)
             
-            logger.info('Image {}, dx={:.3f} dy={:.3f}'.format(i, dx, dy))    
+            logger.info('Image {}, dx={:.3f} dy={:.3f}'.format(i, _dx, _dy))    
         
-        self.results['dxarr'] = dxarr
-        self.results['dyarr'] = dyarr
-        self.results['matrices'] = matrices
-        
-        return self.results
-        
+        return (dx, dy, matrices)
+
     def deshake(self, outdir=None, ref_index=None, sequence_id=None, 
                 save_images=True, save_preview_video=True,
                 preview_fps=24):
@@ -117,7 +129,7 @@ class Deshaker(object):
             
         """
         if sequence_id is None:
-            sequence_id = 'UnkownSequence'
+            sequence_id = 'pylapsy'
         if outdir is None:
             outdir = 'output_{}'.format(sequence_id)
         
@@ -177,4 +189,26 @@ class Deshaker(object):
         if save_preview_video:
             clip.release()
         print_log.info('Results are stored at {}'.format(outdir))
+
+if __name__=='__main__':
+    
+    import pylapsy as ply
+    from time import time
+    DIR = "C:\\Users\\Jonas\\Jonas\\photography\\timelapse\\lrt_out\\LRT_20190504_sunset_noklevann\\"
+    
+    
+    files = ply.io.get_testimg_files_deshake()
+    
+    files = ply.io.find_image_files(DIR,file_pattern='*.jpg')[:20]
+    
+    
+    ds = Deshaker(files)
+    t0=time()
+    res0 = ds.find_shifts(multithread=False)
+    t1=time()
+    res1 = ds.find_shifts(multithread=True)
+    t2=time()
+    
+    print('Elapsed time slow: {:.3f} s'.format(t1-t0))
+    print('Elapsed time fast: {:.3f} s'.format(t2-t1))
      

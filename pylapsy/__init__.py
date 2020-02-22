@@ -34,6 +34,7 @@ from . import image_meta_data
 from . import io 
 from . import utils
 from . import helpers
+from . import speedup_helpers
 
 # high level methods
 from .highlevel_methods import deshake
