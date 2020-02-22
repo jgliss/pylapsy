@@ -26,7 +26,7 @@ def find_shift_lowlevel(imgfile, ref):
     (dx, dy), da, M = ply.utils.find_shift(ref, gray)
     return (dx, dy)
 
-def apply_async(func, fargs, numworkers=4):
+def apply_concurrent_pool(func, fargs, numworkers=4):
     
     result = []
     with ProcessPoolExecutor(max_workers=numworkers) as executor:
@@ -34,14 +34,14 @@ def apply_async(func, fargs, numworkers=4):
             result.append(res)
     return result
 
-def apply_async_thread(func, fargs, numworkers=4):
+def apply_concurrent_threadpool(func, fargs, numworkers=4):
     result = []
     with ThreadPoolExecutor(max_workers=numworkers) as executor:
         for res in executor.map(func, fargs):
             result.append(res)
     return result
     
-def apply_async_mp(func, fargs, numworkers=4):
+def apply_multiproc_pool(func, fargs, numworkers=4):
     
     with Pool(numworkers) as p:
         result = p.map(func, fargs)
@@ -52,7 +52,7 @@ def apply_async_mp(func, fargs, numworkers=4):
 def apply_pool_starmap(func, fargs, numworkers=4):
     
     with Pool(numworkers) as p:
-        result = p.starmap(func, fargs)
+        result = p.starmap(func, fargs, chunksize=100)
     p.close()
     p.join()
     return result
@@ -71,7 +71,7 @@ if __name__=="__main__":
     from time import time, sleep
     from functools import partial
     
-    REPEAT = 10
+    REPEAT = 3
     DIR = "C:\\Users\\Jonas\\Jonas\\photography\\timelapse\\lrt_out\\LRT_20190504_sunset_noklevann\\"
        
     fig, axes = plt.subplots(2,1,sharex=True, figsize=(18, 12))
@@ -80,7 +80,7 @@ if __name__=="__main__":
         if usesmall:
             files = ply.io.get_testimg_files_deshake()
         else:
-            files = ply.io.find_image_files(DIR,file_pattern="*.jpg")[:12]
+            files = ply.io.find_image_files(DIR,file_pattern="*.jpg")[:10]
         
         ds = ply.Deshaker(files)
         
@@ -91,7 +91,7 @@ if __name__=="__main__":
         shifts = get_shift_single(files, REF.img)
         print(shifts[0])
         
-        #res = apply_async_mp(find_shift, (ds.imglist, REF.img))
+        #res = apply_multiproc_pool(find_shift, (ds.imglist, REF.img))
         
         #raise Exception
         reflist = [REF.img] * len(files)
@@ -100,13 +100,13 @@ if __name__=="__main__":
         res = apply_pool_starmap(find_shift_lowlevel, fargs=fllargs)
         
         tests = {'single'           : [get_shift_single, [files, REF.img], []],
-                 'concurrent_HL'    : [apply_async, (fs, ds.imglist), []],
-                 'multiproc_HL'     : [apply_async_mp, (fs, ds.imglist), []],
+                 'concurrent_HL'    : [apply_concurrent_pool, (fs, ds.imglist), []],
+                 'multiproc_HL'     : [apply_multiproc_pool, (fs, ds.imglist), []],
                  'starmap_LL'       : [apply_pool_starmap, (find_shift_lowlevel,fllargs), []],
-                 'concurrent_LL'    : [apply_async, (fs1, files), []],
-                 'multiproc_LL'     : [apply_async_mp, (fs1, files), []],
-                 'threading_LL'     : [apply_async_thread, (fs1, files), []],
-                 'threading_HL'     : [apply_async_thread, (fs, ds.imglist), []]
+                 'concurrent_LL'    : [apply_concurrent_pool, (fs1, files), []],
+                 'multiproc_LL'     : [apply_multiproc_pool, (fs1, files), []],
+                 'threading_LL'     : [apply_concurrent_threadpool, (fs1, files), []],
+                 'threading_HL'     : [apply_concurrent_threadpool, (fs, ds.imglist), []]
                  }
         
         for k in range(REPEAT):
@@ -143,4 +143,4 @@ if __name__=="__main__":
         ax.set_ylabel('Processing time [s]')
         ax.set_title(tit + '{} images (size : {})'
                      .format(len(files), REF.shape))
-    fig.savefig('./performance_comparison_result.jpg')
+    fig.savefig('./performance_comparison_result.png')

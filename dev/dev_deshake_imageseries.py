@@ -14,15 +14,14 @@ import time
 
         
 plt.close('all')
-
-images = ply.helpers.get_testimg_files_deshake()
-
-print(len(images))
+images = ply.io.get_testimg_files_deshake()
+#images = ply.helpers.get_testimg_files_deshake()
 
 imglist = ply.ImageList(images)
 
 outname = 'testvideo.avi'
 outname_cc = 'testvideo_concat.avi'
+
 if os.path.exists(outname):
     os.remove(outname)
     time.sleep(1)
