@@ -32,8 +32,8 @@ class Deshaker(object):
     
     def _init_results(self):
         self.results = dict(
-                dxarr=None,
-                dyarr=None,
+                dx=None,
+                dy=None,
                 matrices=None)
         
     @property 
@@ -60,7 +60,7 @@ class Deshaker(object):
         Returns
         -------
         dict
-            dictionary containing shifts (`dxarr, dyarr`) and transformation
+            dictionary containing shifts (`dx, dy`) and transformation
             matrices (`matrices`) for each image in :attr:`imglist`.
         """
         if ref_index is None:
@@ -75,8 +75,8 @@ class Deshaker(object):
         else:
             dx, dy, matrices = self._find_shifts(imglist, ref)
         
-        self.results['dxarr'] = dx
-        self.results['dyarr'] = dy
+        self.results['dx'] = dx
+        self.results['dy'] = dy
         self.results['matrices'] = matrices
         return self.results
     
@@ -143,14 +143,14 @@ class Deshaker(object):
         
         # Find dx and dy shifts for all images
         results = self.results
-        if results['dxarr'] is None:
+        if results['dx'] is None:
             results = self.find_shifts()
         
-        dxarr, dyarr = results['dxarr'], results['dyarr']
+        dx, dy = results['dx'], results['dy']
         matrices = results['matrices']
         # determine image crop for output images in order to avoid black 
         # borders (based on maximum and minimum shifts)
-        x0,x1,y0,y1 = utils.get_crop(dxarr, dyarr, w, h)
+        x0,x1,y0,y1 = utils.get_crop(dx, dy, w, h)
         
         
         clip = None
@@ -180,6 +180,26 @@ class Deshaker(object):
             
             shifted_crop = shifted[y0:y1, x0:x1]
             
+# =============================================================================
+#             if abs(dx[i]) > 8:
+#                 import matplotlib.pyplot as plt
+#                 from pylapsy import Image
+#                 plt.close("all")
+#                 tit = ('dx, dy: {:.1f}, {:.1f};' 
+#                        ' x0, x1, y0, y1: {:.1f},{:.1f},{:.1f},{:.1f}'
+#                        .format(dx[i], dy[i], x0, x1, y0, y1))
+#                 ax = Image(shifted).show()
+#                 ax.set_title(tit)
+#                 ax =Image(shifted_crop).show()
+#                 ax.set_title(tit)
+#                 print('SHIFT INFO')
+#                 print(tit)
+#                 print(matrices[i])
+#                 print('CROP X GLOBAL')
+#                 print(x0, x1)
+#                 raise Exception
+# =============================================================================
+                
             if save_preview_video:
                 clip.write(shifted_crop)
             
@@ -199,16 +219,8 @@ if __name__=='__main__':
     
     files = ply.io.get_testimg_files_deshake()
     
-    files = ply.io.find_image_files(DIR,file_pattern='*.jpg')[:20]
+    files = ply.io.find_image_files(DIR,file_pattern='*.jpg')
     
     
     ds = Deshaker(files)
-    t0=time()
-    res0 = ds.find_shifts(multithread=False)
-    t1=time()
-    res1 = ds.find_shifts(multithread=True)
-    t2=time()
-    
-    print('Elapsed time slow: {:.3f} s'.format(t1-t0))
-    print('Elapsed time fast: {:.3f} s'.format(t2-t1))
-     
+    ds.deshake()

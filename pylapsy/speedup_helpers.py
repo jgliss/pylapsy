@@ -81,6 +81,7 @@ def find_shifts_fast(imgfiles, ref_gray):
     func = partial(find_shift_lowlevel, ref_gray=ref_gray)
     return apply_concurrent_threadpool(func, imgfiles)
 
+
 if __name__=='__main__':
     import numpy as np
     
