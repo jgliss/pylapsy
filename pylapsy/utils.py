@@ -391,7 +391,7 @@ def find_shift(first_gray, second_gray, **feature_lk_params):
     m = find_affine_partial2d(good_this, good_next)
     dx, dy = m[0,2], m[1,2]
     da = np.arctan2(m[1,0], m[0,0])
-    return ((dx, dy), da, m)
+    return ((-dx, -dy), da, m)
 
 def shift_image(img_arr, m=None):
     
