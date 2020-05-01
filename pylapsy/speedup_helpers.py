@@ -6,7 +6,10 @@ Created on Sat Feb 22 12:46:21 2020
 """
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor
+from multiprocessing.pool import ThreadPool, Pool
 from pylapsy import utils
+from itertools import repeat
+import os
 
 def apply_concurrent_threadpool(func, iterable, numworkers=4):
     """
@@ -81,6 +84,47 @@ def find_shifts_fast(imgfiles, ref_gray):
     func = partial(find_shift_lowlevel, ref_gray=ref_gray)
     return apply_concurrent_threadpool(func, imgfiles)
 
+def apply_pool_starmap(func, fargs, numworkers=4):
+    
+    with Pool(numworkers) as p:
+        result = p.starmap(func, fargs)
+    p.close()
+    p.join()
+    return result
+
+def apply_threadpool_starmap(func, fargs, numworkers=4):
+    
+    with ThreadPool(numworkers) as p:
+        result = p.starmap(func, fargs)
+    p.close()
+    p.join()
+    return result 
+
+def shift_crop_single(file, matrix, crop, outdir):
+    x0,x1,y0,y1 = crop
+    img = utils.imread(file)
+    shifted = utils.shift_image(img, matrix)
+    shifted_crop = shifted[y0:y1, x0:x1]
+    fp = os.path.join(outdir, os.path.basename(file))
+    utils.imsave(shifted_crop, fp)
+
+def shift_crop_list_fast(files, matrices, crop, outdir,
+                         multithread=False):
+    smargs = zip(files, matrices, repeat(crop), repeat(outdir))
+    func = apply_threadpool_starmap if multithread else apply_pool_starmap
+    func(shift_crop_single, smargs)
+    
+def shift_crop_list(files, matrices, crop, outdir, multiproc=True, 
+                    multithread=False):
+    if multiproc:
+        shift_crop_list_fast(files, matrices, crop, outdir,
+                                    multithread=False)
+    elif multithread:
+        shift_crop_list_fast(files, matrices, crop, outdir,
+                                    multithread=True)
+    else:
+        for file, matrix in zip(files, matrices):
+            shift_crop_single(file, matrix, crop, outdir)
 
 if __name__=='__main__':
     import numpy as np
