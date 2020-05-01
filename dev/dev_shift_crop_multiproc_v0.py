@@ -4,27 +4,12 @@ Created on Mon Feb 17 20:56:03 2020
 
 @author: Jonas
 """
-import os
 
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool
 import pylapsy as ply
-
-def get_file_name(imgfile):
-    return os.path.basename(imgfile)
-
-def find_shift(img, ref):
-    #print(os.path.basename(imgfile))
-    #img = Image(imgfile)
-    gray = img.to_gray(inplace=False)
-    (dx, dy), da, M = ply.utils.find_shift(ref.img, gray.img)
-    return (dx, dy)
-
-def find_shift_lowlevel(imgfile, ref):
-    img = ply.utils.imread(imgfile)
-    gray = ply.utils.to_gray(img)
-    (dx, dy), da, M = ply.utils.find_shift(ref, gray)
-    return (dx, dy)
+import os
 
 def apply_concurrent_pool(func, fargs, numworkers=4):
     
@@ -52,28 +37,45 @@ def apply_multiproc_pool(func, fargs, numworkers=4):
 def apply_pool_starmap(func, fargs, numworkers=4):
     
     with Pool(numworkers) as p:
-        result = p.starmap(func, fargs, chunksize=100)
+        result = p.starmap(func, fargs)
     p.close()
     p.join()
     return result
+
+def apply_threadpool_starmap(func, fargs, numworkers=4):
     
+    with ThreadPool(numworkers) as p:
+        result = p.starmap(func, fargs)
+    p.close()
+    p.join()
+    return result    
 
-def get_shift_single(files, ref):
-    shifts = []
-    for file in files:
-        shifts.append(find_shift_lowlevel(file, ref))
-    return shifts
-
+def shift_crop_single(file, matrix, crop, outdir):
+    x0,x1,y0,y1 = crop
+    img = ply.utils.imread(file)
+    shifted = ply.utils.shift_image(img, matrix)
+    shifted_crop = shifted[y0:y1, x0:x1]
+    fp = os.path.join(outdir, os.path.basename(file))
+    ply.utils.imsave(shifted_crop, fp)
+    print(os.path.basename(fp))
+    
+def shift_crop_all(files, matrices, crop, outdir):
+    for file, matrix in zip(files, matrices):
+        shift_crop_single(file, matrix, crop, outdir)
+        
 if __name__=="__main__":
     
     import matplotlib.pyplot as plt
     plt.close('all')
     from time import time, sleep
     from functools import partial
-    
-    REPEAT = 3
+    import shutil
+    REPEAT = 2
     DIR = "C:\\Users\\Jonas\\Jonas\\photography\\timelapse\\lrt_out\\LRT_20190504_sunset_noklevann\\"
        
+    OUTDIR = "./output"
+    if not os.path.exists(OUTDIR):
+        os.mkdir(OUTDIR)
     fig, axes = plt.subplots(2,1,sharex=True, figsize=(18, 12))
     for usesmall in [1, 0]:
         
@@ -84,30 +86,35 @@ if __name__=="__main__":
         
         ds = ply.Deshaker(files)
         
-        REF = ds.imglist[0].to_gray()
-        fs = partial(find_shift, ref=REF)
-        fs1 = partial(find_shift_lowlevel, ref=REF.img)
+        h,w = ds.imglist.current_img.shape[:2]
         
-        shifts = get_shift_single(files, REF.img)
-        print(shifts[0])
+        results = ds.find_shifts()
         
-        #res = apply_multiproc_pool(find_shift, (ds.imglist, REF.img))
+        dx, dy = results['dx'], results['dy']
+        matrices = results['matrices']
+        # determine image crop for output images in order to avoid black 
+        # borders (based on maximum and minimum shifts)
+        crop = ply.utils.get_crop(dx, dy, w, h)
         
-        #raise Exception
-        reflist = [REF.img] * len(files)
-        fllargs = list(zip(files, reflist))
+        shift_crop_all(files, matrices, crop=crop, 
+                       outdir=OUTDIR)
         
-        res = apply_pool_starmap(find_shift_lowlevel, fargs=fllargs)
+        from itertools import repeat
         
-        tests = {'single'           : [get_shift_single, [files, REF.img], []],
-                 'concurrent_HL'    : [apply_concurrent_pool, (fs, ds.imglist), []],
-                 'multiproc_HL'     : [apply_multiproc_pool, (fs, ds.imglist), []],
-                 'starmap_LL'       : [apply_pool_starmap, (find_shift_lowlevel,fllargs), []],
-                 'concurrent_LL'    : [apply_concurrent_pool, (fs1, files), []],
-                 'multiproc_LL'     : [apply_multiproc_pool, (fs1, files), []],
-                 'threading_LL'     : [apply_concurrent_threadpool, (fs1, files), []],
-                 'threading_HL'     : [apply_concurrent_threadpool, (fs, ds.imglist), []]
-                 }
+        smargs = zip(files, matrices, repeat(crop), repeat(OUTDIR))
+        
+        tests = {
+        
+            'single'           : [shift_crop_all, (files, matrices, crop, OUTDIR), []],
+            #'concurrent_HL'    : [apply_concurrent_pool, (fs, ds.imglist), []],
+            #'multiproc_HL'     : [apply_multiproc_pool, (fs, ds.imglist), []],
+            'process_pool_mp'  : [apply_pool_starmap, (shift_crop_single, smargs), []],
+            'thread_pool_mp'    : [apply_threadpool_starmap, (shift_crop_single, smargs), []],
+            #'concurrent_LL'    : [apply_concurrent_pool, (fs1, files), []],
+            #'multiproc_LL'     : [apply_multiproc_pool, (fs1, files), []],
+            #'threading_LL'     : [apply_concurrent_threadpool, (fs1, files), []],
+            #'threading_HL'     : [apply_concurrent_threadpool, (fs, ds.imglist), []]
+            }
         
         for k in range(REPEAT):
             for test, (fun, fargs, results) in tests.items():
@@ -117,13 +124,12 @@ if __name__=="__main__":
                         assert fargs[-1]._index == -1, fargs[-1]._index
                     except AssertionError:
                         fargs[-1]._index = -1
-
+                shutil.rmtree(OUTDIR)
+                sleep(1)
+                os.mkdir(OUTDIR)
                 t0 = time()
-                res = fun(*fargs)
+                fun(*fargs)
                 results.append(time() - t0)
-                assert len(res) == len(files)
-                for l, sh in enumerate(shifts):
-                    assert res[l] == sh
                 sleep(1)
         
         ls = '-'
@@ -142,5 +148,5 @@ if __name__=="__main__":
             tit = 'LARGE IMAGES: '
         ax.set_ylabel('Processing time [s]')
         ax.set_title(tit + '{} images (size : {})'
-                     .format(len(files), REF.shape))
+                     .format(len(files), (h, w)))
     fig.savefig('./performance_comparison_result.png')
