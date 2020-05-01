@@ -120,3 +120,5 @@ dev/**/*.avi
 
 # other output that may stick around
 pylapsy/data/test_data/deshake/output*
+
+pylapsy/output_pylapsy
