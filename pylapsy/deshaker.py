@@ -14,7 +14,7 @@ import os
 
 from pylapsy import utils, ImageList, logger, print_log
 from functools import partial
-from pylapsy.speedup_helpers import find_shifts_fast
+from pylapsy.speedup_helpers import find_shifts_fast, shift_crop_list
 
 class Deshaker(object):
     """Interface for deshaking a series of images
@@ -48,7 +48,7 @@ class Deshaker(object):
         
         self._imglist = val
         
-    def find_shifts(self, ref_index=None, multithread=True):
+    def find_shifts(self, ref_index=None, parallel=True):
         """Find shifts for all images in :attr:`imglist`
         
         Parameters
@@ -69,7 +69,7 @@ class Deshaker(object):
         
         ref = imglist[ref_index].to_gray(inplace=False).img
         
-        if multithread:
+        if parallel:
             res = find_shifts_fast(imglist.files, ref)
             dx, dy, matrices = list(zip(*res))
         else:
@@ -105,6 +105,61 @@ class Deshaker(object):
         return (dx, dy, matrices)
 
     def deshake(self, outdir=None, ref_index=None, sequence_id=None, 
+                save_preview_video=False, parallel=True):
+        """Method that deshakes images sequence and saves result
+        
+        Parameters
+        ----------
+        outdir : str, optional
+            output directory. If None, a subdirectory will be created in the 
+            current directory
+        ref_index : int, optional
+            Index of reference image in sequence (all images are adjusted wrt
+            to this image, defaults to 0).
+        sequence_id : str, optional
+            name of the sequence (for output directory)
+        save_preview_video : bool
+            if True, a preview video is saved (currently not working)
+
+        """
+        if sequence_id is None:
+            sequence_id = 'pylapsy'
+        if outdir is None:
+            outdir = 'output_{}'.format(sequence_id)
+        
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+        
+        imglist = self.imglist
+        
+        # get image width and height
+        h,w = imglist.current_img.shape[:2]
+        
+        # Find dx and dy shifts for all images
+        results = self.results
+        if results['dx'] is None:
+            results = self.find_shifts(ref_index=ref_index, 
+                                       parallel=parallel)
+        
+        dx, dy = results['dx'], results['dy']
+        matrices = results['matrices']
+        # determine image crop for output images in order to avoid black 
+        # borders (based on maximum and minimum shifts)
+        crop = utils.get_crop(dx, dy, w, h)
+        
+        shift_crop_list(imglist.files, 
+                                 matrices, 
+                                 crop, 
+                                 outdir,
+                                 multiproc=parallel,
+                                 multithread=False)
+          
+        if save_preview_video:
+            raise NotImplementedError  
+        
+        print_log.info('Results are stored at {}'.format(outdir))
+        
+    def deshake_v0(self, outdir=None, ref_index=None, sequence_id=None, 
                 save_images=True, save_preview_video=True,
                 preview_fps=24):
         """Method that deshakes images sequence and saves result
@@ -180,26 +235,6 @@ class Deshaker(object):
             
             shifted_crop = shifted[y0:y1, x0:x1]
             
-# =============================================================================
-#             if abs(dx[i]) > 8:
-#                 import matplotlib.pyplot as plt
-#                 from pylapsy import Image
-#                 plt.close("all")
-#                 tit = ('dx, dy: {:.1f}, {:.1f};' 
-#                        ' x0, x1, y0, y1: {:.1f},{:.1f},{:.1f},{:.1f}'
-#                        .format(dx[i], dy[i], x0, x1, y0, y1))
-#                 ax = Image(shifted).show()
-#                 ax.set_title(tit)
-#                 ax =Image(shifted_crop).show()
-#                 ax.set_title(tit)
-#                 print('SHIFT INFO')
-#                 print(tit)
-#                 print(matrices[i])
-#                 print('CROP X GLOBAL')
-#                 print(x0, x1)
-#                 raise Exception
-# =============================================================================
-                
             if save_preview_video:
                 clip.write(shifted_crop)
             
@@ -219,7 +254,7 @@ if __name__=='__main__':
     
     files = ply.io.get_testimg_files_deshake()
     
-    files = ply.io.find_image_files(DIR,file_pattern='*.jpg')
+    #files = ply.io.find_image_files(DIR,file_pattern='*.jpg')
     
     
     ds = Deshaker(files)
